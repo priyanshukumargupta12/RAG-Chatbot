@@ -144,7 +144,7 @@ app.post('/upload/pdf', uploadLimiter, upload.single('pdf'), async (req, res) =>
 
     res.json({ message: 'uploaded' });
   } catch (err) {
-    console.error('Upload failed:', err.message);
+    console.error('Upload failed:', err?.error?.message || err?.message || err);
     res.status(500).json({ error: 'Upload failed. Please try again.' });
   }
 });
