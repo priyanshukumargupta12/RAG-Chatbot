@@ -67,6 +67,7 @@ const uploadLimiter = rateLimit({
   message: { error: 'Too many uploads. Please wait a minute.' },
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
 });
 
 const chatLimiter = rateLimit({
@@ -75,10 +76,14 @@ const chatLimiter = rateLimit({
   message: { error: 'Too many requests. Slow down.' },
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
 });
 
 // ── Express App ────────────────────────────────────────────────────────────────
 const app = express();
+
+// Required behind Render/reverse proxy for rate limiter to identify client IP
+app.set('trust proxy', 1);
 
 // Helmet sets ~15 security headers (XSS, clickjacking, MIME sniffing, etc.)
 app.use(helmet());
