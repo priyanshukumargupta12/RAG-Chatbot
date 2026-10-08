@@ -85,15 +85,32 @@ const app = express();
 // Required behind Render/reverse proxy for rate limiter to identify client IP
 app.set('trust proxy', 1);
 
-// Helmet sets ~15 security headers (XSS, clickjacking, MIME sniffing, etc.)
-app.use(helmet());
+// Helmet sets ~15 security headers (configured to allow cross-origin resource access)
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+}));
+
+const rawAllowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim().replace(/\/+$/, ''))
+  : ['*'];
 
 app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS
-    ? process.env.ALLOWED_ORIGINS.split(',')
-    : '*',
-  methods: ['GET', 'POST'],
-  allowedHeaders: ['Content-Type'],
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    const cleanOrigin = origin.replace(/\/+$/, '');
+    if (
+      rawAllowedOrigins.includes('*') ||
+      rawAllowedOrigins.includes(cleanOrigin) ||
+      cleanOrigin.endsWith('.vercel.app') ||
+      cleanOrigin.includes('localhost')
+    ) {
+      return callback(null, true);
+    }
+    return callback(new Error(`CORS blocked for: ${origin}`));
+  },
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
 }));
 
 // Reject oversized JSON/text bodies early
