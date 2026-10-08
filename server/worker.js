@@ -70,3 +70,11 @@ const worker = new Worker(
 
 worker.on('completed', (job) => console.log(`Job ${job.id} done`));
 worker.on('failed', (job, err) => console.error(`Job ${job?.id} failed:`, err.message));
+
+// ── Health-check HTTP server (required for Render free Web Service) ──────────
+import http from 'http';
+const PORT = process.env.PORT || 8001;
+http.createServer((req, res) => {
+  res.writeHead(200);
+  res.end('Worker is running');
+}).listen(PORT, () => console.log(`Worker health-check server on port ${PORT}`));
